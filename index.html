@@ -1,0 +1,95 @@
+from pathlib import Path
+import zipfile, os
+
+root = Path("/mnt/data/dragon-tiger-demo")
+root.mkdir(exist_ok=True)
+
+index = r'''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dragon Tiger — Demo</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#090b12;color:#f6f7fb;min-height:100vh}
+.container{max-width:1100px;margin:auto;padding:28px 18px 50px}
+header{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:28px}
+.logo{font-size:24px;font-weight:900;letter-spacing:.5px}.logo span{color:#f2b84b}
+.badge{border:1px solid #3b4150;background:#111521;color:#aeb6c7;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:700}
+.hero{background:linear-gradient(135deg,#171a27,#10131d);border:1px solid #2b3040;border-radius:24px;padding:34px;text-align:center;box-shadow:0 20px 60px #0005}
+h1{margin:0 0 10px;font-size:clamp(32px,6vw,58px)}.hero p{color:#aeb6c7;margin:0 auto 24px;max-width:650px;line-height:1.6}
+.btn{border:0;border-radius:12px;padding:13px 20px;font-weight:800;cursor:pointer;font-size:15px;background:#f2b84b;color:#111}
+.btn.secondary{background:#252a38;color:#fff;border:1px solid #3a4150}.btn:active{transform:translateY(1px)}
+.table{margin-top:22px;display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:14px}
+.card{background:#111520;border:1px solid #2b3040;border-radius:20px;padding:22px;text-align:center}
+.card h2{margin:0 0 15px}.dragon h2{color:#e45d65}.tiger h2{color:#f2b84b}.tie h2{color:#8ca2ff}
+.icon{font-size:52px;margin:5px}.score{font-size:34px;font-weight:900;margin:8px 0}
+.result{min-height:105px;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.result-label{color:#8992a5;font-size:12px;text-transform:uppercase;letter-spacing:1.4px}.result-value{font-size:28px;font-weight:900;margin-top:6px}
+.controls{margin-top:18px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.panel{margin-top:22px;background:#111520;border:1px solid #2b3040;border-radius:20px;padding:20px}
+.panel h3{margin:0 0 12px}.history{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:8px 11px;border-radius:999px;font-size:12px;font-weight:800}.pill.dragon{background:#4a2026;color:#ff9da2}.pill.tiger{background:#493a1a;color:#ffd67b}.pill.tie{background:#222d52;color:#aebdff}
+.notice{margin-top:20px;color:#8f98aa;font-size:12px;line-height:1.6;text-align:center}
+@media(max-width:700px){.table{grid-template-columns:1fr}.hero{padding:25px 18px}}
+</style>
+</head>
+<body>
+<div class="container">
+<header><div class="logo">DRAGON <span>×</span> TIGER</div><div class="badge">DEMO MODE • NO REAL BETS</div></header>
+
+<section class="hero">
+<h1>Dragon Tiger Demo</h1>
+<p>A polished front-end simulation for learning and testing UI flows. Results are generated locally and are not predictions of any real game.</p>
+<button class="btn" onclick="drawRound()">Draw Demo Round</button>
+</section>
+
+<section class="table">
+<div class="card dragon"><h2>🐉 Dragon</h2><div class="icon">🂡</div><div class="score" id="dragon">—</div><div class="result-label">Card</div></div>
+<div class="card tie"><h2>Result</h2><div class="result"><div class="result-label">Demo outcome</div><div class="result-value" id="result">Ready</div></div></div>
+<div class="card tiger"><h2>🐯 Tiger</h2><div class="icon">🂱</div><div class="score" id="tiger">—</div><div class="result-label">Card</div></div>
+</section>
+
+<div class="controls">
+<button class="btn" onclick="drawRound()">New Round</button>
+<button class="btn secondary" onclick="resetGame()">Reset</button>
+</div>
+
+<section class="panel">
+<h3>Recent Demo Results</h3>
+<div class="history" id="history"><span style="color:#778095;font-size:13px">No rounds yet.</span></div>
+</section>
+<div class="notice">This website is a simulation/demo only. It does not hack, predict, or reveal outcomes of any real Dragon Tiger game, and it does not process payments or wagers.</div>
+</div>
+
+<script>
+const cards=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+let history=[];
+function drawRound(){
+  const d=Math.floor(Math.random()*13)+1, t=Math.floor(Math.random()*13)+1;
+  const names=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+  document.getElementById("dragon").textContent=names[d-1];
+  document.getElementById("tiger").textContent=names[t-1];
+  let r=d>t?"Dragon":t>d?"Tiger":"Tie";
+  document.getElementById("result").textContent=r;
+  history.unshift(r); history=history.slice(0,12); renderHistory();
+}
+function renderHistory(){
+ const el=document.getElementById("history");
+ el.innerHTML=history.map(x=>`<span class="pill ${x.toLowerCase()}">${x}</span>`).join("");
+}
+function resetGame(){
+ history=[];renderHistory();
+ document.getElementById("dragon").textContent="—";
+ document.getElementById("tiger").textContent="—";
+ document.getElementById("result").textContent="Ready";
+}
+</script>
+</body>
+</html>'''
+(root/"index.html").write_text(index, encoding="utf-8")
+
+zip_path="/mnt/data/dragon-tiger-demo.zip"
+with zipfile.ZipFile(zip_path,"w",zipfile.ZIP_DEFLATED) as z:
+    z.write(root/"index.html","index.html")
+print(zip_path)
